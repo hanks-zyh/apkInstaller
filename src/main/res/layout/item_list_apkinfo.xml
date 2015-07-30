@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/material_blue_grey_800"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <ImageView
+        android:id="@+id/iv_icon"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginRight="16dp"
+        android:src="@mipmap/ic_launcher" />
+
+    <TextView
+        android:id="@+id/tv_name"
+        android:layout_width="match_parent"
+        android:layout_height="25dp"
+        android:layout_alignParentTop="true"
+        android:layout_toLeftOf="@+id/cb_checked"
+        android:layout_toRightOf="@+id/iv_icon"
+        android:ellipsize="middle"
+        android:singleLine="true"
+        android:text="Photos"
+        android:textColor="#000"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/tv_installed"
+        android:layout_width="40dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="4dp"
+        android:gravity="center"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/iv_icon"
+        android:ellipsize="middle"
+        android:singleLine="true"
+        android:text="已安装"
+        android:textColor="#f00"
+        android:textSize="10sp" />
+
+
+    <TextView
+        android:id="@+id/tv_size"
+        android:layout_width="80dp"
+        android:layout_height="28dp"
+        android:layout_below="@+id/tv_name"
+        android:layout_toRightOf="@+id/tv_create_at"
+        android:text="20.23 MB"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/tv_create_at"
+        android:layout_width="120dp"
+        android:layout_height="28dp"
+        android:layout_below="@+id/tv_name"
+        android:layout_toRightOf="@+id/iv_icon"
+        android:text="2015/7/20 12:23"
+        android:textSize="12sp" />
+
+    <CheckBox
+        android:id="@+id/cb_checked"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:gravity="center" />
+</RelativeLayout>
