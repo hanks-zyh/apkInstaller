@@ -18,7 +18,11 @@ import android.text.format.Formatter;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,20 +38,51 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
 
+    private ProgressBar mInstallProgress;
     private RecyclerView mRecyclerView;
     private ApkInfoAdapter mAdapter;
+    private Button mInstallButton;
+
     private ArrayList<ApkModel> mApkList = new ArrayList<>();
+    private ArrayList<String> mInsatllPathList = new ArrayList<>();
     private List<ApkModel> installAppList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mInstallButton = (Button) findViewById(R.id.btn_install);
         mRecyclerView = (RecyclerView) findViewById(R.id.listview);
+        mInstallProgress = (ProgressBar) findViewById(R.id.progress_install);
+
         getData();
+
         mAdapter = new ApkInfoAdapter();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.setAdapter(mAdapter);
+
+        mInstallProgress.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                installApkforList();
+            }
+        });
+    }
+
+    private void installApkforList() {
+        if (mInsatllPathList.size() <= 0) {
+            showToast("至少选择一个apk");
+            return;
+        }
+
+
+        //install
+        mInstallProgress.setMax(mInsatllPathList.size());
+        mInstallButton.setText("0/"+mInsatllPathList.size());
+        for (String path : mInsatllPathList) {
+            new InstallTask().execute(path);
+        }
     }
 
     private void getData() {
@@ -61,11 +96,8 @@ public class MainActivity extends AppCompatActivity {
                 MediaStore.Files.FileColumns.SIZE,
                 MediaStore.Files.FileColumns.DATE_MODIFIED
         };
-
-
         final String path = "storage/sdcard1/Download";
         new AsyncTask<String, String, String>() {
-
             @Override
             protected String doInBackground(String... params) {
                 installAppList = getAppList(getApplicationContext());
@@ -77,28 +109,9 @@ public class MainActivity extends AppCompatActivity {
                     long size = cursor.getLong(2);
                     long lastModify = cursor.getLong(3);
 
-//                    log("id:" + id);
-                    log("data:" + data);
-//                    log("size:" + size);
-//                    log("time:" + lastModify);
-                    mApkList.add(makeApkModel(data,lastModify,size));
+                    mApkList.add(makeApkModel(data, lastModify, size));
                 }
                 cursor.close();
-                /*
-                File dir = new File(params[0]);
-                try {
-                    if (dir.exists() && dir.isDirectory()) {
-                        for (File file : dir.listFiles()) {
-                            if (isApkFile(file)) {
-                                mApkList.add(makeApkModel(file));
-                            }
-                        }
-                    } else {
-                        showToast("文件夹不存在=.=");
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }*/
                 return "";
             }
 
@@ -106,7 +119,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             protected void onPostExecute(String s) {
                 super.onPostExecute(s);
-
                 mAdapter.notifyDataSetChanged();
             }
         }.execute(path);
@@ -148,22 +160,25 @@ public class MainActivity extends AppCompatActivity {
         return file.getName().endsWith(".apk");
     }
 
-    private void silentInstallApk(File file) {
+    private boolean silentInstallApk(String filePath) {
         try {
             Process processe = Runtime.getRuntime().exec("su");
             OutputStream outputStream = processe.getOutputStream();
             DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
-            dataOutputStream.writeBytes("chmod 777 " + file.getPath() + "\n");
-            dataOutputStream.writeBytes("pm install -r " + file.getPath());
+            dataOutputStream.writeBytes("chmod 777 " + filePath + "\n");
+            dataOutputStream.writeBytes("pm install -r " + filePath);
             dataOutputStream.flush();
             dataOutputStream.close();
             int value = processe.waitFor();
-            showToast("安装结果:" + value);
+            if (value == 0) {
+                return true;
+            }
         } catch (IOException e) {
             e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return false;
     }
 
     private void showToast(String msg) {
@@ -201,6 +216,36 @@ public class MainActivity extends AppCompatActivity {
         return appInfos;
     }
 
+    class InstallTask extends AsyncTask<String, Integer, Boolean> {
+
+        @Override
+        protected Boolean doInBackground(String... params) {
+            boolean success = silentInstallApk(params[0]);
+            if (success) {
+                mInsatllPathList.remove(params[0]);
+            }
+            return success;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean success) {
+            super.onPostExecute(success);
+            if (success) {
+                updateProgress();
+            } else {
+                showToast("安装失败!");
+            }
+        }
+
+
+    }
+
+    private void updateProgress() {
+        int max = mInstallProgress.getMax();
+        mInstallProgress.setProgress(max - mInsatllPathList.size());
+        mInstallButton.setText((max - mInsatllPathList.size()) +"/"+ max);
+    }
+
     class ApkInfoAdapter extends RecyclerView.Adapter<ApkInfoViewHolder> {
         @Override
         public ApkInfoViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -210,12 +255,23 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(ApkInfoViewHolder holder, int position) {
-            ApkModel apkModel = mApkList.get(position);
+            final ApkModel apkModel = mApkList.get(position);
             holder.setApkName(apkModel.name);
             holder.setApkCreateAt(apkModel.lastModify);
             holder.setApkSize(apkModel.size);
             holder.setApkInstalled(apkModel.isInstalled);
             holder.setIcon(apkModel.icon);
+            holder.setChecked(mInsatllPathList.contains(apkModel.path));
+            holder.mChecked.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    if (isChecked) {
+                        mInsatllPathList.add(apkModel.path);
+                    } else {
+                        mInsatllPathList.remove(apkModel.path);
+                    }
+                }
+            });
         }
 
         @Override
@@ -231,6 +287,7 @@ public class MainActivity extends AppCompatActivity {
         private TextView mApkCreateAt;
         private TextView mApkName;
         private ImageView mIcon;
+        private CheckBox mChecked;
 
         public ApkInfoViewHolder(View itemView) {
             super(itemView);
@@ -238,7 +295,12 @@ public class MainActivity extends AppCompatActivity {
             mApkName = (TextView) itemView.findViewById(R.id.tv_name);
             mApkCreateAt = (TextView) itemView.findViewById(R.id.tv_create_at);
             mApkSize = (TextView) itemView.findViewById(R.id.tv_size);
+            mChecked = (CheckBox) itemView.findViewById(R.id.cb_checked);
             mApkInstallStatus = (TextView) itemView.findViewById(R.id.tv_installed);
+        }
+
+        public void setChecked(boolean isChecked) {
+            mChecked.setChecked(isChecked);
         }
 
         public void setIcon(Drawable icon) {
