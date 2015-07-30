@@ -5,6 +5,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageStats;
+import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -14,6 +15,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.format.Formatter;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -34,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
 
     private RecyclerView mRecyclerView;
     private ApkInfoAdapter mAdapter;
-    private ArrayList<ApkModel>   mApkList = new ArrayList<>();
+    private ArrayList<ApkModel> mApkList = new ArrayList<>();
     private List<ApkModel> installAppList;
 
     @Override
@@ -49,15 +51,40 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getData() {
-        Uri uri = MediaStore.Files.getContentUri("external");
+        final Uri uri = MediaStore.Files.getContentUri("external");
+        final String selection = MediaStore.Files.FileColumns.DATA + " LIKE '%.apk'";
+        final String sortOrder = MediaStore.Files.FileColumns.TITLE + " asc";
 
-        String path = "storage/sdcard1/Download";
+        final String[] columns = new String[]{
+                MediaStore.Files.FileColumns._ID,
+                MediaStore.Files.FileColumns.DATA,
+                MediaStore.Files.FileColumns.SIZE,
+                MediaStore.Files.FileColumns.DATE_MODIFIED
+        };
+
+
+        final String path = "storage/sdcard1/Download";
         new AsyncTask<String, String, String>() {
 
             @Override
             protected String doInBackground(String... params) {
                 installAppList = getAppList(getApplicationContext());
+                Cursor cursor = getContentResolver().query(uri, columns, selection, null, sortOrder);
+                while (cursor.moveToNext()) {
 
+                    long id = cursor.getLong(0);
+                    String data = cursor.getString(1);
+                    long size = cursor.getLong(2);
+                    long lastModify = cursor.getLong(3);
+
+//                    log("id:" + id);
+                    log("data:" + data);
+//                    log("size:" + size);
+//                    log("time:" + lastModify);
+                    mApkList.add(makeApkModel(data,lastModify,size));
+                }
+                cursor.close();
+                /*
                 File dir = new File(params[0]);
                 try {
                     if (dir.exists() && dir.isDirectory()) {
@@ -71,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                }
+                }*/
                 return "";
             }
 
@@ -86,23 +113,23 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private ApkModel makeApkModel(File file) {
+    private ApkModel makeApkModel(String filePath, long lastModify, long length) {
         ApkModel apkModel = new ApkModel();
 
         PackageManager pm = getPackageManager();
-        PackageInfo packageInfo = pm.getPackageArchiveInfo(file.getAbsolutePath(), PackageManager.GET_ACTIVITIES);
+        PackageInfo packageInfo = pm.getPackageArchiveInfo(filePath, PackageManager.GET_ACTIVITIES);
         if (packageInfo != null) {
             ApplicationInfo applicationInfo = packageInfo.applicationInfo;
             //重新设置sourceDir
-            applicationInfo.sourceDir = file.getAbsolutePath();
-            applicationInfo.publicSourceDir = file.getAbsolutePath();
+            applicationInfo.sourceDir = filePath;
+            applicationInfo.publicSourceDir = filePath;
 
             apkModel.packageName = applicationInfo.packageName; //包名
             apkModel.name = pm.getApplicationLabel(applicationInfo).toString();
             apkModel.icon = applicationInfo.loadIcon(pm); //图标
-            apkModel.lastModify = file.lastModified(); //文件最后修改时间
-            apkModel.size = file.length(); //文件大小
-            apkModel.path = file.getAbsolutePath();
+            apkModel.lastModify = lastModify; //文件最后修改时间
+            apkModel.size = length; //文件大小
+            apkModel.path = filePath;
             apkModel.isInstalled = isInstalledApk(apkModel.packageName, apkModel.versionCode);
         }
         return apkModel;
@@ -110,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean isInstalledApk(String packageName, int versionCode) {
         for (ApkModel apkModel : installAppList) {
-            if (apkModel.packageName.equals(packageName) && apkModel.versionCode == versionCode) {
+            if (apkModel.packageName.equals(packageName)) {
                 return true;
             }
         }
@@ -141,6 +168,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void showToast(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    private void log(String msg) {
+        Log.i("ins", msg);
     }
 
     /**
@@ -210,7 +241,7 @@ public class MainActivity extends AppCompatActivity {
             mApkInstallStatus = (TextView) itemView.findViewById(R.id.tv_installed);
         }
 
-        public void setIcon(Drawable icon){
+        public void setIcon(Drawable icon) {
             mIcon.setImageDrawable(icon);
         }
 
