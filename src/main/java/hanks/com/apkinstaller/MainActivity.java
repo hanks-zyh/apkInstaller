@@ -6,8 +6,10 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageStats;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -32,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
 
     private RecyclerView mRecyclerView;
     private ApkInfoAdapter mAdapter;
-    private ArrayList<ApkModel>   mApkList = new ArrayList<>();;
+    private ArrayList<ApkModel>   mApkList = new ArrayList<>();
     private List<ApkModel> installAppList;
 
     @Override
@@ -44,10 +46,11 @@ public class MainActivity extends AppCompatActivity {
         mAdapter = new ApkInfoAdapter();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.setAdapter(mAdapter);
-
     }
 
     private void getData() {
+        Uri uri = MediaStore.Files.getContentUri("external");
+
         String path = "storage/sdcard1/Download";
         new AsyncTask<String, String, String>() {
 
