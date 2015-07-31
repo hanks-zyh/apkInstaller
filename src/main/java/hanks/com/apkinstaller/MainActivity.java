@@ -6,10 +6,13 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageStats;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -20,7 +23,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -45,8 +47,19 @@ public class MainActivity extends AppCompatActivity {
 
     private ArrayList<ApkModel> mApkList = new ArrayList<>();
     private ArrayList<String> mInsatllPathList = new ArrayList<>();
-    private List<ApkModel> installAppList;
+    private List<ApkModel> installAppList  = new ArrayList<>();
 
+    private static final int MSG_UPDATE_LIST = 30;
+
+    private Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            if(msg.what == MSG_UPDATE_LIST){
+                mAdapter.notifyDataSetChanged();
+            }
+        }
+    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,13 +69,14 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView = (RecyclerView) findViewById(R.id.listview);
         mInstallProgress = (ProgressBar) findViewById(R.id.progress_install);
 
-        getData();
-
         mAdapter = new ApkInfoAdapter();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.setAdapter(mAdapter);
 
-        mInstallProgress.setOnClickListener(new View.OnClickListener() {
+        getData();
+
+
+        mInstallButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 installApkforList();
@@ -103,13 +117,12 @@ public class MainActivity extends AppCompatActivity {
                 installAppList = getAppList(getApplicationContext());
                 Cursor cursor = getContentResolver().query(uri, columns, selection, null, sortOrder);
                 while (cursor.moveToNext()) {
-
                     long id = cursor.getLong(0);
                     String data = cursor.getString(1);
                     long size = cursor.getLong(2);
                     long lastModify = cursor.getLong(3);
-
                     mApkList.add(makeApkModel(data, lastModify, size));
+                    handler.sendEmptyMessage(MSG_UPDATE_LIST);
                 }
                 cursor.close();
                 return "";
@@ -197,7 +210,6 @@ public class MainActivity extends AppCompatActivity {
         List<PackageInfo> packageInfos = pm.getInstalledPackages(0);
         List<ApkModel> appInfos = new ArrayList<>();
         for (PackageInfo packageInfo : packageInfos) {
-
             ApplicationInfo app = packageInfo.applicationInfo;
             if ((app.flags & ApplicationInfo.FLAG_SYSTEM) == 0) {
                 // 非系统应用
@@ -262,13 +274,13 @@ public class MainActivity extends AppCompatActivity {
             holder.setApkInstalled(apkModel.isInstalled);
             holder.setIcon(apkModel.icon);
             holder.setChecked(mInsatllPathList.contains(apkModel.path));
-            holder.mChecked.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            holder.mChecked.setOnClickListener(new View.OnClickListener() {
                 @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    if (isChecked) {
-                        mInsatllPathList.add(apkModel.path);
-                    } else {
+                public void onClick(View v) {
+                    if (mInsatllPathList.contains(apkModel.path)) {
                         mInsatllPathList.remove(apkModel.path);
+                    } else {
+                        mInsatllPathList.add(apkModel.path);
                     }
                 }
             });
@@ -323,6 +335,7 @@ public class MainActivity extends AppCompatActivity {
 
         public void setApkInstalled(boolean isInstalled) {
             mApkInstallStatus.setText(isInstalled ? "已安装" : "未安装");
+            mApkInstallStatus.setTextColor(isInstalled ? Color.GREEN : Color.RED);
         }
     }
 
