@@ -28,6 +28,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.panwrona.downloadprogressbar.library.DownloadProgressBar;
+
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -57,6 +59,8 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+    private DownloadProgressBar progress_button;
+    private int val =0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
         mInstallButton = (Button) findViewById(R.id.btn_install);
         mRecyclerView = (RecyclerView) findViewById(R.id.listview);
         mInstallProgress = (ProgressBar) findViewById(R.id.progress_install);
+        progress_button = (DownloadProgressBar) findViewById(R.id.progress_button);
 
         mAdapter = new ApkInfoAdapter();
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -80,6 +85,51 @@ public class MainActivity extends AppCompatActivity {
                 installApkforList();
             }
         });
+        progress_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                installApkforList();
+                progress_button.playManualProgressAnimation();
+            }
+        });
+
+
+        progress_button.setOnProgressUpdateListener(new DownloadProgressBar.OnProgressUpdateListener() {
+            @Override
+            public void onProgressUpdate(float currentPlayTime) {
+                // Here we are setting % value on our text view.
+            }
+
+            @Override
+            public void onAnimationStarted() {
+                // Here we are disabling our view because of possible interactions while animating.
+                progress_button.setEnabled(false);
+            }
+
+            @Override
+            public void onAnimationEnded() {
+                progress_button.setEnabled(true);
+            }
+
+            @Override
+            public void onAnimationSuccess() {
+            }
+
+            @Override
+            public void onAnimationError() {
+
+            }
+
+            @Override
+            public void onManualProgressStarted() {
+
+            }
+
+            @Override
+            public void onManualProgressEnded() {
+
+            }
+        });
     }
 
     private void installApkforList() {
@@ -91,6 +141,7 @@ public class MainActivity extends AppCompatActivity {
 
         //install
         mInstallProgress.setMax(mInsatllPathList.size());
+
         mInstallButton.setText("0/" + mInsatllPathList.size());
         for (String path : mInsatllPathList) {
             new InstallTask().execute(path);
@@ -230,6 +281,9 @@ public class MainActivity extends AppCompatActivity {
         int max = mInstallProgress.getMax();
         mInstallProgress.setProgress(max - mInsatllPathList.size());
         mInstallButton.setText((max - mInsatllPathList.size()) + "/" + max);
+
+        val  = (int) ((max - mInsatllPathList.size()) * 100.0f/ max);
+        progress_button.setProgress(val);
     }
 
     class InstallTask extends AsyncTask<String, Integer, Boolean> {
@@ -267,9 +321,9 @@ public class MainActivity extends AppCompatActivity {
             holder.setApkName(apkModel.name);
 
             File file = new File(apkModel.path);
-            if (file.exists()){
+            if (file.exists()) {
                 holder.setApkCreateAt(file.lastModified());
-            }else {
+            } else {
                 holder.setApkCreateAt(apkModel.lastModify);
             }
             holder.setApkSize(apkModel.size);

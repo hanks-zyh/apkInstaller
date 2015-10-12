@@ -1,17 +1,19 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:dpv="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-
+    android:padding="8dp"
     tools:context=".MainActivity">
 
 
     <Button
         android:id="@+id/btn_install"
+
         android:layout_width="80dp"
-        android:layout_alignParentRight="true"
-        android:background="@drawable/button_rect"
         android:layout_height="40dp"
+        android:layout_alignParentRight="true"
+        android:background="@null"
         android:text="install" />
 
     <android.support.v7.widget.RecyclerView
@@ -21,13 +23,30 @@
         android:layout_below="@+id/btn_install"></android.support.v7.widget.RecyclerView>
 
     <ProgressBar
+        android:id="@+id/progress_install"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
-        android:layout_toLeftOf="@+id/btn_install"
         android:layout_height="40dp"
-        android:id="@+id/progress_install"
-        android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_toLeftOf="@+id/btn_install" />
 
+    <com.panwrona.downloadprogressbar.library.DownloadProgressBar
+        android:id="@+id/progress_button"
+        android:layout_width="140dp"
+        android:layout_height="140dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="100dp"
+        android:visibility="gone"
+        dpv:circleBackgroundColor="#aa2200"
+        dpv:circleRadius="48dp"
+        dpv:drawingColor="#420"
+        dpv:lineWidth="3dp"
+        dpv:overshootValue="2.5"
+        dpv:progressBackgroundColor="#36a"
+        dpv:progressColor="#aa1"
+        dpv:progressDuration="2000"
+        dpv:resultDuration="5000"
+        dpv:strokeWidth="3dp" />
 </RelativeLayout>
