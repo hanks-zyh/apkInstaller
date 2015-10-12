@@ -2,9 +2,8 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/material_blue_grey_800"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="8dp">
 
     <ImageView
         android:id="@+id/iv_icon"
@@ -66,4 +65,11 @@
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
         android:gravity="center" />
+
+    <View
+
+        android:layout_alignParentBottom="true"
+        android:layout_width="match_parent"
+        android:background="#2666"
+        android:layout_height="0.8dp"/>
 </RelativeLayout>

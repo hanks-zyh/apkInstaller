@@ -40,26 +40,24 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
 
+    private static final int MSG_UPDATE_LIST = 30;
     private ProgressBar mInstallProgress;
     private RecyclerView mRecyclerView;
     private ApkInfoAdapter mAdapter;
     private Button mInstallButton;
-
     private ArrayList<ApkModel> mApkList = new ArrayList<>();
     private ArrayList<String> mInsatllPathList = new ArrayList<>();
-    private List<ApkModel> installAppList  = new ArrayList<>();
-
-    private static final int MSG_UPDATE_LIST = 30;
-
-    private Handler handler = new Handler(){
+    private List<ApkModel> installAppList = new ArrayList<>();
+    private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            if(msg.what == MSG_UPDATE_LIST){
+            if (msg.what == MSG_UPDATE_LIST) {
                 mAdapter.notifyDataSetChanged();
             }
         }
     };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -93,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
 
         //install
         mInstallProgress.setMax(mInsatllPathList.size());
-        mInstallButton.setText("0/"+mInsatllPathList.size());
+        mInstallButton.setText("0/" + mInsatllPathList.size());
         for (String path : mInsatllPathList) {
             new InstallTask().execute(path);
         }
@@ -228,6 +226,12 @@ public class MainActivity extends AppCompatActivity {
         return appInfos;
     }
 
+    private void updateProgress() {
+        int max = mInstallProgress.getMax();
+        mInstallProgress.setProgress(max - mInsatllPathList.size());
+        mInstallButton.setText((max - mInsatllPathList.size()) + "/" + max);
+    }
+
     class InstallTask extends AsyncTask<String, Integer, Boolean> {
 
         @Override
@@ -248,14 +252,6 @@ public class MainActivity extends AppCompatActivity {
                 showToast("安装失败!");
             }
         }
-
-
-    }
-
-    private void updateProgress() {
-        int max = mInstallProgress.getMax();
-        mInstallProgress.setProgress(max - mInsatllPathList.size());
-        mInstallButton.setText((max - mInsatllPathList.size()) +"/"+ max);
     }
 
     class ApkInfoAdapter extends RecyclerView.Adapter<ApkInfoViewHolder> {
@@ -269,7 +265,13 @@ public class MainActivity extends AppCompatActivity {
         public void onBindViewHolder(ApkInfoViewHolder holder, int position) {
             final ApkModel apkModel = mApkList.get(position);
             holder.setApkName(apkModel.name);
-            holder.setApkCreateAt(apkModel.lastModify);
+
+            File file = new File(apkModel.path);
+            if (file.exists()){
+                holder.setApkCreateAt(file.lastModified());
+            }else {
+                holder.setApkCreateAt(apkModel.lastModify);
+            }
             holder.setApkSize(apkModel.size);
             holder.setApkInstalled(apkModel.isInstalled);
             holder.setIcon(apkModel.icon);
