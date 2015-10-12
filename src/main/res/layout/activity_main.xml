@@ -8,9 +8,10 @@
 
     <Button
         android:id="@+id/btn_install"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_toRightOf="@+id/progress_install"
+        android:layout_width="80dp"
+        android:layout_alignParentRight="true"
+        android:background="@drawable/button_rect"
+        android:layout_height="40dp"
         android:text="install" />
 
     <android.support.v7.widget.RecyclerView
@@ -21,7 +22,8 @@
 
     <ProgressBar
         style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="220dp"
+        android:layout_width="match_parent"
+        android:layout_toLeftOf="@+id/btn_install"
         android:layout_height="40dp"
         android:id="@+id/progress_install"
         android:layout_alignParentTop="true"
